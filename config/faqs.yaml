@@ -1,0 +1,58 @@
+version: 1
+entries:
+  - topic: vpn
+    title: VPN Setup
+    keywords:
+      - vpn setup
+      - connect vpn
+      - remote access
+    answer: >-
+      Install the company-approved VPN client from the internal software portal,
+      import the profile supplied by IT, and sign in with your work account. Never
+      share the VPN profile or one-time authentication code. Contact the IT service
+      desk if the profile is missing or the connection fails.
+
+  - topic: dev-environment
+    title: Development Environment Setup
+    keywords:
+      - dev setup
+      - development environment
+      - setup laptop
+    answer: >-
+      Follow the approved onboarding checklist to install Git, Docker, the team
+      runtime, and the configured code editor. Use your individual work account and
+      store project secrets only in the approved secret manager or local ignored
+      environment file.
+
+  - topic: wifi
+    title: Office Wi-Fi
+    keywords:
+      - wifi
+      - wi-fi
+      - internet access
+    answer: >-
+      Request the current staff or intern Wi-Fi instructions from the IT service
+      desk. Do not post wireless passwords in Mattermost channels or include them in
+      screenshots.
+
+  - topic: allowance
+    title: Allowance Claims
+    keywords:
+      - claim allowance
+      - allowance
+      - reimbursement
+    answer: >-
+      Submit allowance or reimbursement requests through the approved finance form
+      with the required evidence. Confirm the current submission deadline and point
+      of contact with your mentor or HR team.
+
+  - topic: contacts
+    title: Onboarding Points of Contact
+    keywords:
+      - point of contact
+      - who do i ask
+      - onboarding contact
+    answer: >-
+      Contact your assigned mentor for task questions, HR for attendance or policy
+      questions, and the IT service desk for access, device, VPN, or network issues.
+

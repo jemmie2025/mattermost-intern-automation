@@ -1,0 +1,162 @@
+{
+  "name": "Task 5247 - Mattermost Intern Automation Schedules",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 30 8 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "80f41c39-6c65-4f9f-b9b7-8d52279da950",
+      "name": "08:30 Check-in",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-520, -300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://REPLACE_WITH_BOT_API_URL/automation/reminders/checkin",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "168fb002-d6e8-4de2-8b52-6026c47ec962",
+      "name": "Post Check-in Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-220, -300]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 30 16 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "6a820fae-42ab-4096-8045-7a22c9ca9e48",
+      "name": "16:30 Worklog",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-520, -100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://REPLACE_WITH_BOT_API_URL/automation/reminders/worklog",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "1a060d6e-01f6-45ef-a5c1-3c7cc27d02a4",
+      "name": "Post Worklog Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-220, -100]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 17 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "e38f38aa-d72e-4dc7-88b0-7b371961c8fd",
+      "name": "17:00 Check-out",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-520, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://REPLACE_WITH_BOT_API_URL/automation/reminders/checkout",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "0961e6c6-a7c9-4ef2-8751-e18d35ed852a",
+      "name": "Post Check-out Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-220, 100]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 15 17 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "f5ae7f44-abca-45da-88a9-f8cbac782de0",
+      "name": "17:15 Digest",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-520, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://REPLACE_WITH_BOT_API_URL/automation/digests/today",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "a1013e61-5009-4cf0-ab1e-a7b7d622d367",
+      "name": "Publish Mentor Digest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-220, 300]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "08:30 Check-in": {
+      "main": [[{"node": "Post Check-in Reminder", "type": "main", "index": 0}]]
+    },
+    "16:30 Worklog": {
+      "main": [[{"node": "Post Worklog Reminder", "type": "main", "index": 0}]]
+    },
+    "17:00 Check-out": {
+      "main": [[{"node": "Post Check-out Reminder", "type": "main", "index": 0}]]
+    },
+    "17:15 Digest": {
+      "main": [[{"node": "Publish Mentor Digest", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Africa/Lagos"
+  },
+  "versionId": "aafc474d-f12e-4f58-b0bf-0c8df65cb0cd",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
