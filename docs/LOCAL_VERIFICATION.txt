@@ -1,42 +1,62 @@
 Task #5247 — Local Verification Evidence
-Date: 2026-08-28 UTC
-Runtime: Python 3.12.13
+Date: 2026-08-30
+Tester: Jemimah Godswill
 
-Automated test command:
-  .venv/bin/pytest --cov=app --cov-report=term-missing
+Environment
+  Host: WSL Ubuntu with Docker Desktop
+  Application: Python 3.12.14-slim-bookworm
+  Database: PostgreSQL 16.15 Alpine
+  API exposure: 127.0.0.1:8080
+  Test data only; no production credentials used
 
-Result:
-  16 passed
-  Total coverage including branches: 87.56%
-  Required threshold: 80.0% (passed)
+Automated Quality Validation
+  Ruff lint: PASSED
+  Repository preflight: PASSED (16 checks)
+  Automated tests: PASSED (16 tests)
+  Branch coverage: 87.56%
+  GitHub Actions CI: PASSED
 
-Static/configuration checks:
-  Ruff lint: passed
-  Repository preflight: passed (16 checks)
-  GitHub Actions SHA pin validation: passed
-  Python compileall: passed
-  Shell syntax (scripts/smoke_test.sh): passed
-  Python dependency consistency (pip check): passed
-  FAQ YAML parse and entry count: passed (5 entries)
-  Compose YAML parse and service count: passed (bot, postgres)
-  Jira CSV parse and row count: passed (1 epic + 12 stories)
-  n8n workflow JSON: passed (4 schedules, 4 authenticated calls, inactive import)
-  Secret-pattern review: only explicit test tokens found under tests/
+Container Runtime Validation
+  Docker Compose configuration: PASSED
+  Application image build: PASSED
+  Bot container health: PASSED
+  PostgreSQL container health: PASSED
+  API readiness endpoint: PASSED (HTTP 200)
+  Structured log review: PASSED
+  End-to-end smoke test: PASSED
 
-Local API smoke test:
-  Health readiness: passed
-  Check-in: passed
-  Daily worklog: passed
-  FAQ slash-command behavior: passed
-  FAQ keyword-webhook behavior: passed
-  Check-out: passed
+Verified Functional Flows
+  Check-in recording: PASSED
+  Daily worklog submission: PASSED
+  FAQ slash-command matching: PASSED
+  FAQ keyword-webhook matching: PASSED
+  Check-out recording: PASSED
+  Attendance CSV export: PASSED
+  Worklog CSV export: PASSED
 
-Environment-dependent checks not claimed:
-  GitHub-hosted CI run (workflow is configured; repository push pending)
-  Docker image build/runtime (Docker is unavailable in the verification runtime)
-  Live company Mattermost API connection
-  Live test-channel slash command/webhook demonstration
-  Exact company Mattermost v11.10 patch/edition confirmation
-  Company n8n credential selection and manual execution
-  Confluence publication/technical-lead review
-  Jira import/creation
+Persistence Validation
+  Before restart: attendance=2, worklogs=1, faqs=5
+  After restart: attendance=2, worklogs=1, faqs=5
+  PostgreSQL volume persistence: PASSED
+
+Security Validation
+  .env excluded from Git: PASSED
+  Non-root runtime user: appuser (UID 10001)
+  Read-only container filesystem: ENABLED
+  Linux capabilities: ALL DROPPED
+  Privilege escalation: BLOCKED
+  Unauthorized attendance export: REJECTED (HTTP 403)
+  Authorized mentor exports: PASSED
+  Security audit events: PASSED
+  Secrets in reviewed logs: NONE
+
+Important Scope Note
+  The local Mattermost configuration used test placeholders only.
+  No live Mattermost API connection is claimed by this validation.
+
+Pending Organization-Controlled Validation
+  Live Mattermost test-channel demonstration
+  Dedicated bot and integration credentials
+  Exact Mattermost 11.10 patch and edition confirmation
+  Approved n8n workflow and credential configuration
+  Confluence review and Jira publication
