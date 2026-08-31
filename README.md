@@ -1,38 +1,86 @@
-# Mattermost Intern Automation — Task #5247
+# Mattermost Intern Automation
 
-A production-oriented PoC for attendance, daily worklogs, mentor digests, and approved onboarding FAQs on self-hosted Mattermost.
+**Task #5247 — Project Foundation, Secure Runtime, and CI Validation**
 
-## Proof at a Glance
+A production-oriented proof of concept for automating intern attendance, daily worklogs, mentor reporting, and approved onboarding FAQs in a self-hosted Mattermost environment.
 
-| Result | Evidence |
-|---|---|
-| Three required modules implemented | Check-in/out, worklog/digest, FAQ slash + keyword |
-| Automated verification | **16 tests passed** |
-| Test depth | **87.56% coverage including branches** |
-| Runtime proof | End-to-end local API smoke test passed |
-| Orchestration | Inactive-by-default n8n schedule template with machine authentication |
-| Deployment | Non-root FastAPI container + PostgreSQL Compose stack |
-| CI/security | SHA-pinned GitHub Actions, Ruff, preflight and dependency checks |
-| Production planning | Architecture, runbook, demo plan, and 12 Jira-ready stories |
+## Delivery Status
 
-## What It Does
-
-| Module | User experience | Control |
+| Phase | Scope | Status |
 |---|---|---|
-| Attendance | `/checkin [note]`, `/checkout [note]` | UTC timestamps, Lagos business date, duplicate/order protection |
-| Worklog | `/task completed \| blockers \| next plan` | One updateable daily record and scheduled mentor digest |
-| FAQ | `/faq vpn` or `vpn setup` | Approved YAML answers only; safe fallback for unknown questions |
+| Phase 1 | Project foundation, application modules, tests, documentation, and CI | **Complete** |
+| Phase 2 | Docker runtime, persistence, security, smoke tests, exports, and auditing | **Complete** |
+| Phase 3 | Live Mattermost and n8n validation | **Pending approval** |
 
-## Selected Design
+## CI Evidence
 
-**n8n orchestration + Python/FastAPI policy service + dedicated Mattermost bot + REST API v4 + slash commands + PostgreSQL.**
+The screenshot below confirms that the Phase 2 GitHub Actions quality gate passed successfully on `main`.
 
-n8n owns schedules; FastAPI owns validation, authorization, data, exports, audit events,
-and Mattermost API calls. This avoids placing business rules or bot tokens inside workflows.
-The Apps Framework was rejected because its official repository is deprecated; a server
-plugin is unnecessarily privileged for this scope.
+<p align="center">
+  <img
+    src="./docs/evidence/task-5247-phase-2-ci-validation-passed.png"
+    alt="Task #5247 Phase 2 CI validation passed"
+    width="100%"
+  />
+</p>
 
-## Verify Locally
+Detailed results are available in [Local Verification Evidence](docs/LOCAL_VERIFICATION.txt).
+
+> This evidence contains test-environment results only. No production credentials, tokens, webhook URLs, or production data are stored in this repository.
+
+## Verified Results
+
+| Validation | Result |
+|---|---|
+| Automated tests | **16 passed** |
+| Branch coverage | **87%+** |
+| Repository preflight | **16 checks passed** |
+| API readiness | **HTTP 200** |
+| Runtime services | FastAPI and PostgreSQL healthy |
+| Smoke test | Check-in, worklog, FAQ, and check-out passed |
+| Persistence | Data preserved after container restart |
+| Export security | Unauthorized request rejected with **HTTP 403** |
+| Container security | Non-root user, read-only filesystem, and dropped capabilities |
+| GitHub Actions | Phase 2 CI pipeline passed on `main` |
+
+## Core Capabilities
+
+| Module | Function |
+|---|---|
+| Attendance | Records `/checkin` and `/checkout` with duplicate and sequence protection |
+| Daily worklog | Stores one updateable daily report per intern |
+| Mentor reporting | Produces authenticated attendance and worklog exports |
+| Approved FAQ | Responds only with reviewed YAML-based answers |
+
+## Architecture
+
+```mermaid
+flowchart TD
+    MM["Mattermost"] --> API["FastAPI service"]
+    N8N["n8n schedules"] --> API
+    FAQ["Approved FAQ YAML"] --> API
+    API --> DB["PostgreSQL"]
+    API --> MM
+```
+
+- **Mattermost** provides commands, channels, and bot interactions.
+- **n8n** manages scheduled automation.
+- **FastAPI** handles validation, authorization, business rules, exports, and auditing.
+- **PostgreSQL** stores attendance, worklogs, FAQ activity, and audit records.
+
+## Security Controls
+
+- Non-root application user (`UID 10001`)
+- Read-only container filesystem
+- Linux capabilities dropped
+- Privilege escalation blocked
+- PostgreSQL isolated on a private Docker network
+- Administrative and mentor authorization checks
+- Structured audit events
+- Secrets and `.env` excluded from Git
+- GitHub Actions pinned to full commit SHAs
+
+## Local Validation
 
 ```bash
 python3 -m venv .venv
@@ -42,56 +90,57 @@ python3 -m venv .venv
 .venv/bin/pytest --cov=app --cov-report=term-missing
 ```
 
-Expected result:
+Expected baseline:
 
 ```text
-16 passed
-Total coverage: 87.56%
+16 tests passed
+87%+ branch coverage
+16 preflight checks passed
 ```
 
-Run the API smoke test:
-
-```bash
-mkdir -p data
-SCHEDULER_ENABLED=false \
-DATABASE_URL=sqlite+pysqlite:///./data/intern_bot.db \
-.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8080
-
-# In another terminal
-bash scripts/smoke_test.sh
-```
-
-## Docker
+## Docker Compose
 
 ```bash
 cp .env.example .env
-# Replace placeholders with approved TEST values only.
 docker compose config
 docker compose up --build -d
+docker compose ps
 curl --fail http://127.0.0.1:8080/health/ready
+bash scripts/smoke_test.sh
 ```
 
-Never commit `.env`, bot tokens, webhook URLs, passwords, internal hostnames, or production data.
+Use approved test-only values in `.env`. Never commit credentials or production data.
 
-## Reviewer Route
+Stop the services without deleting the PostgreSQL volume:
 
-1. Read [Submission Summary](docs/SUBMISSION_SUMMARY.md).
-2. Review [Architecture](docs/ARCHITECTURE.md).
-3. Run the tests and [Demo Plan](docs/DEMO_AND_VALIDATION.md).
-4. Use the [Maintenance Guide](docs/MAINTENANCE_GUIDE.md).
-5. Import the [Jira Backlog](docs/jira-import.csv).
-6. Complete the [Live Access Checklist](docs/LIVE_ACCESS_CHECKLIST.md).
-7. Follow the [Private GitHub Publication Guide](docs/GITHUB_PUBLISH.md).
-8. Import the inactive [n8n schedule template](n8n/README.md).
+```bash
+docker compose down
+```
 
-## Honest Completion Status
+## n8n and Live Validation
 
-The design, code, tests, documentation, and backlog are complete. Final Definition of Done still requires company access for:
+The repository includes an inactive n8n template with four scheduled triggers and four authenticated API requests.
 
-- exact Mattermost 11.10 patch version and edition confirmation;
-- live test-channel connection and stakeholder demonstration;
-- n8n credential selection and manual execution proof;
-- Confluence publication/review;
-- Jira import.
+It must remain inactive until the approved credentials, endpoint, timezone, and test environment are confirmed.
 
-No production administrator credentials are required.
+The existing organization-managed Product Release webhook has not been modified or claimed as Task #5247 evidence. A separate test integration will only be created after explicit approval.
+
+## Documentation
+
+- [Submission Summary](docs/SUBMISSION_SUMMARY.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Local Verification Evidence](docs/LOCAL_VERIFICATION.txt)
+- [Demo and Validation Plan](docs/DEMO_AND_VALIDATION.md)
+- [Maintenance Guide](docs/MAINTENANCE_GUIDE.md)
+- [Live Access Checklist](docs/LIVE_ACCESS_CHECKLIST.md)
+- [Jira-ready Backlog](docs/jira-import.csv)
+- [n8n Workflow Guide](n8n/README.md)
+- [Security Guidance](SECURITY.md)
+
+## Completion Statement
+
+The application, automated tests, Docker runtime validation, persistence checks, security controls, documentation, and CI validation are complete.
+
+Final acceptance requires approval for a restricted Mattermost test channel, dedicated bot identity, approved n8n credentials, and a stakeholder-observed live demonstration.
+
+No production administrator credentials are required or requested.
