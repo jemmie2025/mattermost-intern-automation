@@ -1,0 +1,68 @@
+{
+  "name": "Task 5247 - Mattermost Quiz Notification Template",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "REPLACE_WITH_APPROVED_WEBHOOK_PATH",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "dafb792c-1f8a-4c74-8248-80e2edffde9c",
+      "name": "Webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://REPLACE_WITH_APPROVED_MATTERMOST_HOST/hooks/REPLACE_WITH_APPROVED_TEST_WEBHOOK",
+        "sendBody": true,
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ \"New quiz submission\\nParticipant: \" + ($json.body.participant || \"Unknown\") + \"\\nQuiz: \" + ($json.body.quiz_title || \"Unknown\") + \"\\nScore: \" + ($json.body.score || \"Pending\") }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        144,
+        144
+      ],
+      "id": "3f80619d-e177-4a7a-8309-ec1db1e5a966",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
