@@ -1,86 +1,115 @@
-# Mattermost Intern Automation
+# Mattermost Intern Automation — Task #5247
 
-**Task #5247 — Project Foundation, Secure Runtime, and CI Validation**
+A production-oriented PoC for attendance, daily worklogs, mentor digests, approved onboarding FAQs, and quiz notifications on self-hosted Mattermost.
 
-A production-oriented proof of concept for automating intern attendance, daily worklogs, mentor reporting, and approved onboarding FAQs in a self-hosted Mattermost environment.
+Local validation supports Python 3.10–3.12. The production container uses Python 3.12.
 
-## Delivery Status
+## Proof at a Glance
 
-| Phase | Scope | Status |
+| Result | Evidence |
+|---|---|
+| Required modules | Check-in/out, worklog/digest, FAQ and quiz notification |
+| Automated verification | **16 tests passed** |
+| Test coverage | **87.56% including branches** |
+| Runtime validation | End-to-end local API smoke test passed |
+| CI validation | GitHub Actions pipeline passed |
+| Live integration | n8n delivered dynamic quiz data to an isolated Mattermost channel |
+| Deployment | Non-root FastAPI container and PostgreSQL Compose stack |
+| Security | SHA-pinned GitHub Actions, Ruff and dependency checks |
+| Documentation | Architecture, runbook, demo plan and Jira-ready backlog |
+
+## What It Does
+
+| Module | User experience | Control |
 |---|---|---|
-| Phase 1 | Project foundation, application modules, tests, documentation, and CI | **Complete** |
-| Phase 2 | Docker runtime, persistence, security, smoke tests, exports, and auditing | **Complete** |
-| Phase 3 | Live Mattermost and n8n validation | **Pending approval** |
+| Attendance | `/checkin [note]` and `/checkout [note]` | UTC timestamps, Lagos business date and duplicate protection |
+| Worklog | `/task completed \| blockers \| next plan` | One updateable daily record and scheduled mentor digest |
+| FAQ | `/faq vpn` or `vpn setup` | Approved YAML answers and safe fallback responses |
+| Quiz notification | Quiz submission notification | Isolated n8n workflow and Mattermost test channel |
 
-## CI Evidence
+## Selected Design
 
-The screenshot below confirms that the Phase 2 GitHub Actions quality gate passed successfully on `main`.
+**n8n orchestration + Python/FastAPI policy service + dedicated Mattermost bot + REST API v4 + slash commands + PostgreSQL**
 
-<p align="center">
-  <img
-    src="./docs/evidence/task-5247-phase-2-ci-validation-passed.png"
-    alt="Task #5247 Phase 2 CI validation passed"
-    width="100%"
-  />
-</p>
+n8n owns workflow orchestration and schedules. FastAPI owns validation, authorization, data processing, exports, audit events and Mattermost API calls.
 
-Detailed results are available in [Local Verification Evidence](docs/LOCAL_VERIFICATION.txt).
+This keeps business rules and credentials outside the workflow definitions.
 
-> This evidence contains test-environment results only. No production credentials, tokens, webhook URLs, or production data are stored in this repository.
+## Live n8n → Mattermost Validation
 
-## Verified Results
+An isolated validation was completed on 1 September 2026 using the published `Task 5247 - Mattermost Playbook Validation` n8n workflow.
 
-| Validation | Result |
-|---|---|
-| Automated tests | **16 passed** |
-| Branch coverage | **87%+** |
-| Repository preflight | **16 checks passed** |
-| API readiness | **HTTP 200** |
-| Runtime services | FastAPI and PostgreSQL healthy |
-| Smoke test | Check-in, worklog, FAQ, and check-out passed |
-| Persistence | Data preserved after container restart |
-| Export security | Unauthorized request rejected with **HTTP 403** |
-| Container security | Non-root user, read-only filesystem, and dropped capabilities |
-| GitHub Actions | Phase 2 CI pipeline passed on `main` |
+The validated path was:
 
-## Core Capabilities
-
-| Module | Function |
-|---|---|
-| Attendance | Records `/checkin` and `/checkout` with duplicate and sequence protection |
-| Daily worklog | Stores one updateable daily report per intern |
-| Mentor reporting | Produces authenticated attendance and worklog exports |
-| Approved FAQ | Responds only with reviewed YAML-based answers |
-
-## Architecture
-
-```mermaid
-flowchart TD
-    MM["Mattermost"] --> API["FastAPI service"]
-    N8N["n8n schedules"] --> API
-    FAQ["Approved FAQ YAML"] --> API
-    API --> DB["PostgreSQL"]
-    API --> MM
+```text
+POST request
+    ↓
+n8n production Webhook
+    ↓
+HTTP Request node
+    ↓
+Mattermost incoming webhook
+    ↓
+quiz-automation-test channel
 ```
 
-- **Mattermost** provides commands, channels, and bot interactions.
-- **n8n** manages scheduled automation.
-- **FastAPI** handles validation, authorization, business rules, exports, and auditing.
-- **PostgreSQL** stores attendance, worklogs, FAQ activity, and audit records.
+The workflow accepts the following JSON structure:
 
-## Security Controls
+```json
+{
+  "quiz_title": "Task 5247 Test Quiz",
+  "participant": "Jemimah",
+  "score": "8/10"
+}
+```
 
-- Non-root application user (`UID 10001`)
-- Read-only container filesystem
-- Linux capabilities dropped
-- Privilege escalation blocked
-- PostgreSQL isolated on a private Docker network
-- Administrative and mentor authorization checks
-- Structured audit events
-- Secrets and `.env` excluded from Git
-- GitHub Actions pinned to full commit SHAs
+The HTTP Request node dynamically formats the submitted information into a Mattermost notification containing:
 
-## Local Validation
+- Participant name
+- Quiz title
+- Quiz score
+
+Validation confirmed that:
+
+- The published n8n production webhook accepted the POST request.
+- The workflow started successfully.
+- The HTTP Request node delivered the notification.
+- The isolated Mattermost channel received the dynamic values.
+- No webhook URL, token or credential is stored in this repository.
+
+## Validation Evidence
+
+### 1. CI Pipeline Validation
+
+![Successful CI pipeline validation](docs/evidence/task-5247-phase-2-ci-validation-passed.png)
+
+### 2. n8n → Mattermost End-to-End Validation
+
+![Successful n8n to Mattermost validation](docs/evidence/task-5247-n8n-mattermost-e2e-success.png)
+
+### 3. Dynamic Quiz Notification Validation
+
+![Successful dynamic quiz notification](docs/evidence/task-5247-dynamic-quiz-mattermost-success.png)
+
+## Pending Microsoft Forms Integration
+
+The remaining external integration is:
+
+```text
+Microsoft Forms
+    ↓
+Power Automate
+    ↓
+n8n production Webhook
+    ↓
+Mattermost
+```
+
+This step is pending approved Power Automate access for the company Microsoft account.
+
+## Verify Locally
+
+Create the virtual environment and run the automated checks:
 
 ```bash
 python3 -m venv .venv
@@ -90,57 +119,82 @@ python3 -m venv .venv
 .venv/bin/pytest --cov=app --cov-report=term-missing
 ```
 
-Expected baseline:
+Expected result:
 
 ```text
-16 tests passed
-87%+ branch coverage
-16 preflight checks passed
+16 passed
+Total coverage: 87.56%
 ```
 
-## Docker Compose
+Run the API locally:
+
+```bash
+mkdir -p data
+
+SCHEDULER_ENABLED=false \
+DATABASE_URL=sqlite+pysqlite:///./data/intern_bot.db \
+.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8080
+```
+
+Run the smoke test from another terminal:
+
+```bash
+bash scripts/smoke_test.sh
+```
+
+## Docker Validation
 
 ```bash
 cp .env.example .env
 docker compose config
 docker compose up --build -d
-docker compose ps
 curl --fail http://127.0.0.1:8080/health/ready
-bash scripts/smoke_test.sh
 ```
 
-Use approved test-only values in `.env`. Never commit credentials or production data.
+Only approved test credentials should be added to `.env`.
 
-Stop the services without deleting the PostgreSQL volume:
+Never commit:
 
-```bash
-docker compose down
-```
+- `.env`
+- Bot tokens
+- Webhook URLs
+- Passwords
+- Internal hostnames
+- Production data
 
-## n8n and Live Validation
+## Reviewer Route
 
-The repository includes an inactive n8n template with four scheduled triggers and four authenticated API requests.
+1. Read the [Submission Summary](docs/SUBMISSION_SUMMARY.md).
+2. Review the [Architecture](docs/ARCHITECTURE.md).
+3. Run the tests and follow the [Demo Plan](docs/DEMO_AND_VALIDATION.md).
+4. Review the [Maintenance Guide](docs/MAINTENANCE_GUIDE.md).
+5. Review the [Jira Backlog](docs/JIRA_BACKLOG.md).
+6. Complete the [Live Access Checklist](docs/LIVE_ACCESS_CHECKLIST.md).
+7. Follow the [GitHub Publication Guide](docs/GITHUB_PUBLISH.md).
+8. Review the [n8n Workflow Guide](n8n/README.md).
 
-It must remain inactive until the approved credentials, endpoint, timezone, and test environment are confirmed.
+## Completion Status
 
-The existing organization-managed Product Release webhook has not been modified or claimed as Task #5247 evidence. A separate test integration will only be created after explicit approval.
+### Completed
 
-## Documentation
+- Project foundation
+- Local validation
+- Private GitHub repository
+- CI pipeline validation
+- Isolated Mattermost test channel
+- Published n8n workflow
+- Production webhook validation
+- Static Mattermost notification
+- Dynamic quiz notification
+- Participant, quiz title and score mapping
+- Screenshot evidence
 
-- [Submission Summary](docs/SUBMISSION_SUMMARY.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Local Verification Evidence](docs/LOCAL_VERIFICATION.txt)
-- [Demo and Validation Plan](docs/DEMO_AND_VALIDATION.md)
-- [Maintenance Guide](docs/MAINTENANCE_GUIDE.md)
-- [Live Access Checklist](docs/LIVE_ACCESS_CHECKLIST.md)
-- [Jira-ready Backlog](docs/jira-import.csv)
-- [n8n Workflow Guide](n8n/README.md)
-- [Security Guidance](SECURITY.md)
+### Pending
 
-## Completion Statement
+- Power Automate access
+- Microsoft Forms connection
+- Real form-submission validation
+- Confluence publication and review
+- Jira import
 
-The application, automated tests, Docker runtime validation, persistence checks, security controls, documentation, and CI validation are complete.
-
-Final acceptance requires approval for a restricted Mattermost test channel, dedicated bot identity, approved n8n credentials, and a stakeholder-observed live demonstration.
-
-No production administrator credentials are required or requested.
+No production administrator credentials are required.
