@@ -1,115 +1,58 @@
-# Mattermost Intern Automation — Task #5247
+# Task #5247 — Research & Architecture Design: Intern Automation Bots for Self-Hosted Mattermost
 
-A production-oriented PoC for attendance, daily worklogs, mentor digests, approved onboarding FAQs, and quiz notifications on self-hosted Mattermost.
+A production-oriented proof of concept for attendance, worklogs, mentor reporting, onboarding FAQs, and n8n-driven Mattermost automation.
 
-Local validation supports Python 3.10–3.12. The production container uses Python 3.12.
+## Results
 
-## Proof at a Glance
-
-| Result | Evidence |
+| Area | Verified outcome |
 |---|---|
-| Required modules | Check-in/out, worklog/digest, FAQ and quiz notification |
-| Automated verification | **16 tests passed** |
-| Test coverage | **87.56% including branches** |
-| Runtime validation | End-to-end local API smoke test passed |
-| CI validation | GitHub Actions pipeline passed |
-| Live integration | n8n delivered dynamic quiz data to an isolated Mattermost channel |
-| Deployment | Non-root FastAPI container and PostgreSQL Compose stack |
-| Security | SHA-pinned GitHub Actions, Ruff and dependency checks |
-| Documentation | Architecture, runbook, demo plan and Jira-ready backlog |
+| Core automation | Attendance, daily worklog/digest, and FAQ modules implemented |
+| Quality | **16 tests passed** with **87.56% branch coverage** |
+| Runtime | Local API smoke test and container health checks passed |
+| CI/security | GitHub Actions green, SHA-pinned actions, Ruff, preflight, and dependency checks |
+| n8n | Published production webhooks executed successfully |
+| Mattermost | Dynamic quiz and mock custom-form notifications reached the isolated test channel |
 
-## What It Does
-
-| Module | User experience | Control |
-|---|---|---|
-| Attendance | `/checkin [note]` and `/checkout [note]` | UTC timestamps, Lagos business date and duplicate protection |
-| Worklog | `/task completed \| blockers \| next plan` | One updateable daily record and scheduled mentor digest |
-| FAQ | `/faq vpn` or `vpn setup` | Approved YAML answers and safe fallback responses |
-| Quiz notification | Quiz submission notification | Isolated n8n workflow and Mattermost test channel |
-
-## Selected Design
-
-**n8n orchestration + Python/FastAPI policy service + dedicated Mattermost bot + REST API v4 + slash commands + PostgreSQL**
-
-n8n owns workflow orchestration and schedules. FastAPI owns validation, authorization, data processing, exports, audit events and Mattermost API calls.
-
-This keeps business rules and credentials outside the workflow definitions.
-
-## Live n8n → Mattermost Validation
-
-An isolated validation was completed on 1 September 2026 using the published `Task 5247 - Mattermost Playbook Validation` n8n workflow.
-
-The validated path was:
+## Architecture
 
 ```text
-POST request
-    ↓
-n8n production Webhook
-    ↓
-HTTP Request node
-    ↓
-Mattermost incoming webhook
-    ↓
-quiz-automation-test channel
+Mattermost/Form Event → n8n → FastAPI Policy Service → PostgreSQL/Mattermost API
 ```
 
-The workflow accepts the following JSON structure:
+## Live Validation
 
-```json
-{
-  "quiz_title": "Task 5247 Test Quiz",
-  "participant": "Jemimah",
-  "score": "8/10"
-}
+```text
+Quiz POST → n8n Webhook → HTTP Request → Mattermost notification
+
+Mock Form POST → Webhook → Edit Fields → HTTP Request
+→ Mattermost notification → Webhook response
 ```
 
-The HTTP Request node dynamically formats the submitted information into a Mattermost notification containing:
+The custom-form test processed credential-free mock data for `Test User`, added an `accepted-for-test` status and timestamp, delivered the notification to Mattermost, and completed all four n8n nodes successfully.
 
-- Participant name
-- Quiz title
-- Quiz score
+## Evidence
 
-Validation confirmed that:
+### CI Pipeline
 
-- The published n8n production webhook accepted the POST request.
-- The workflow started successfully.
-- The HTTP Request node delivered the notification.
-- The isolated Mattermost channel received the dynamic values.
-- No webhook URL, token or credential is stored in this repository.
+![Successful CI pipeline](docs/evidence/task-5247-phase-2-ci-validation-passed.png)
 
-## Validation Evidence
+### n8n → Mattermost Validation
 
-### 1. CI Pipeline Validation
+![Successful n8n to Mattermost workflow](docs/evidence/task-5247-n8n-mattermost-e2e-success.png)
 
-![Successful CI pipeline validation](docs/evidence/task-5247-phase-2-ci-validation-passed.png)
-
-### 2. n8n → Mattermost End-to-End Validation
-
-![Successful n8n to Mattermost validation](docs/evidence/task-5247-n8n-mattermost-e2e-success.png)
-
-### 3. Dynamic Quiz Notification Validation
+### Dynamic Quiz Notification
 
 ![Successful dynamic quiz notification](docs/evidence/task-5247-dynamic-quiz-mattermost-success.png)
 
-## Pending Microsoft Forms Integration
+### Custom Form n8n Execution
 
-The remaining external integration is:
+![Successful custom form n8n execution](docs/evidence/task5247_n8n_success.png)
 
-```text
-Microsoft Forms
-    ↓
-Power Automate
-    ↓
-n8n production Webhook
-    ↓
-Mattermost
-```
+### Custom Form Mattermost Notification
 
-This step is pending approved Power Automate access for the company Microsoft account.
+![Successful custom form Mattermost notification](docs/evidence/task5247_mattermost_success.png)
 
-## Verify Locally
-
-Create the virtual environment and run the automated checks:
+## Local Verification
 
 ```bash
 python3 -m venv .venv
@@ -119,82 +62,10 @@ python3 -m venv .venv
 .venv/bin/pytest --cov=app --cov-report=term-missing
 ```
 
-Expected result:
+Expected: **16 tests passed** and **87.56% coverage**.
 
-```text
-16 passed
-Total coverage: 87.56%
-```
+## Scope and Security
 
-Run the API locally:
+The design, application, tests, CI pipeline, isolated Mattermost integration, dynamic quiz, and mock custom-form notification are complete. The form workflow is notification-only; creating or adding a real Mattermost user requires an approved destination, permissions, and API method.
 
-```bash
-mkdir -p data
-
-SCHEDULER_ENABLED=false \
-DATABASE_URL=sqlite+pysqlite:///./data/intern_bot.db \
-.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8080
-```
-
-Run the smoke test from another terminal:
-
-```bash
-bash scripts/smoke_test.sh
-```
-
-## Docker Validation
-
-```bash
-cp .env.example .env
-docker compose config
-docker compose up --build -d
-curl --fail http://127.0.0.1:8080/health/ready
-```
-
-Only approved test credentials should be added to `.env`.
-
-Never commit:
-
-- `.env`
-- Bot tokens
-- Webhook URLs
-- Passwords
-- Internal hostnames
-- Production data
-
-## Reviewer Route
-
-1. Read the [Submission Summary](docs/SUBMISSION_SUMMARY.md).
-2. Review the [Architecture](docs/ARCHITECTURE.md).
-3. Run the tests and follow the [Demo Plan](docs/DEMO_AND_VALIDATION.md).
-4. Review the [Maintenance Guide](docs/MAINTENANCE_GUIDE.md).
-5. Review the [Jira Backlog](docs/JIRA_BACKLOG.md).
-6. Complete the [Live Access Checklist](docs/LIVE_ACCESS_CHECKLIST.md).
-7. Follow the [GitHub Publication Guide](docs/GITHUB_PUBLISH.md).
-8. Review the [n8n Workflow Guide](n8n/README.md).
-
-## Completion Status
-
-### Completed
-
-- Project foundation
-- Local validation
-- Private GitHub repository
-- CI pipeline validation
-- Isolated Mattermost test channel
-- Published n8n workflow
-- Production webhook validation
-- Static Mattermost notification
-- Dynamic quiz notification
-- Participant, quiz title and score mapping
-- Screenshot evidence
-
-### Pending
-
-- Power Automate access
-- Microsoft Forms connection
-- Real form-submission validation
-- Confluence publication and review
-- Jira import
-
-No production administrator credentials are required.
+No webhook URL, token, password, internal hostname, or real personal data is stored in this repository.
