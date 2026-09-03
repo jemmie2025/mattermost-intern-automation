@@ -1,0 +1,147 @@
+{
+  "name": "Task 5247 - Custom Form Mattermost Notification Template",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7d666260-70a1-4563-b922-288f6295512a",
+              "name": "",
+              "value": "=={{ $json.body.name || \"Test User\" }}",
+              "type": "string"
+            },
+            {
+              "id": "ac7ce804-37c6-4853-9629-016eb10aa099",
+              "name": "email",
+              "value": "=={{ $json.body.email || \"test.user@example.invalid\" }}",
+              "type": "string"
+            },
+            {
+              "id": "e20f44a2-f3cf-46fc-ba47-c91c6e3292f9",
+              "name": "role",
+              "value": "=={{ $json.body.role || \"Intern\" }}",
+              "type": "string"
+            },
+            {
+              "id": "2fbf7f2b-17e5-4017-b125-c3fd5325bea3",
+              "name": "status",
+              "value": "accepted-for-test",
+              "type": "string"
+            },
+            {
+              "id": "7ff3ff0e-d401-4be4-90f8-a0422790d7af",
+              "name": "processed_at",
+              "value": "=={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "955041d0-070a-40f4-bb89-d649e8df75bf",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {},
+        "respondWith": "firstIncomingItem"
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        672,
+        0
+      ],
+      "id": "aa314ec3-1105-4626-bc73-cf5554e3fac0",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "REPLACE_WITH_APPROVED_WEBHOOK_PATH",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e1501c67-2c76-4b33-8b90-bd9807968041",
+      "name": "Webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://REPLACE_WITH_APPROVED_MATTERMOST_HOST/hooks/REPLACE_WITH_APPROVED_TEST_WEBHOOK",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=text",
+              "value": "=={{ \"Task #5247 - Custom Form Test | Name: \" + $json.name + \" | Email: \" + $json.email + \" | Role: \" + $json.role + \" | Status: \" + $json.status + \" | Processed: \" + $json.processed_at }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "320ee9fe-ecda-40e1-863b-50c4a6d9c2b2",
+      "name": "HTTP Request"
+    }
+  ],
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "nodeGroups": []
+}
