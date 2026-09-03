@@ -52,6 +52,12 @@ The custom-form test processed credential-free mock data for `Test User`, added 
 
 ![Successful custom form Mattermost notification](docs/evidence/task5247_mattermost_success.png)
 
+### Reusable Template Import
+
+The sanitized, inactive workflow template was imported successfully with all four nodes connected.
+
+![Reusable n8n template imported successfully](docs/evidence/task5247_reusable_template_import.png)
+
 ## Local Verification
 
 ```bash
