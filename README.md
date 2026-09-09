@@ -1,62 +1,69 @@
-# Task #5247 — Research & Architecture Design: Intern Automation Bots for Self-Hosted Mattermost
+# Task #5247 — Intern Automation Bots for Self-Hosted Mattermost
 
-A production-oriented proof of concept for attendance, worklogs, mentor reporting, onboarding FAQs, and n8n-driven Mattermost automation.
+Research, architecture, and proof of concept for attendance, worklogs, mentor reporting, onboarding FAQs, and Mattermost automation.
 
-## Results
+## Verified Results
 
-| Area | Verified outcome |
+| Area | Outcome |
 |---|---|
-| Core automation | Attendance, daily worklog/digest, and FAQ modules implemented |
-| Quality | **16 tests passed** with **87.56% branch coverage** |
-| Runtime | Local API smoke test and container health checks passed |
-| CI/security | GitHub Actions green, SHA-pinned actions, Ruff, preflight, and dependency checks |
-| n8n | Published production webhooks executed successfully |
-| Mattermost | Dynamic quiz and mock custom-form notifications reached the isolated test channel |
+| Application | Attendance, worklog/digest, and FAQ modules implemented |
+| Local validation | 16 tests passed; reported coverage: 87.56%; API and container health checks passed |
+| CI | GitHub Actions passed with SHA-pinned actions, Ruff, preflight, and dependency checks |
+| Native Mattermost form | `/quiz` opens an interactive dialog directly inside Mattermost |
+| Submission | n8n receives the form data, posts it through the bot, and returns a successful response |
+| Reusability | Earlier sanitized custom-form template imported successfully |
 
 ## Architecture
 
-```text
-Mattermost/Form Event → n8n → FastAPI Policy Service → PostgreSQL/Mattermost API
-```
+The application uses FastAPI for policy logic, with PostgreSQL and the Mattermost API as integration targets.
 
-## Live Validation
+The verified native form runs through two independent n8n webhook flows:
 
 ```text
-Quiz POST → n8n Webhook → HTTP Request → Mattermost notification
-
-Mock Form POST → Webhook → Edit Fields → HTTP Request
-→ Mattermost notification → Webhook response
+/quiz → Open webhook → Mattermost dialog → Response
+Submit → Submission webhook → Bot channel post → Response
 ```
 
-The custom-form test processed credential-free mock data for `Test User`, added an `accepted-for-test` status and timestamp, delivered the notification to Mattermost, and completed all four n8n nodes successfully.
+Users complete the form inside Mattermost. This proof of concept records participant, quiz name, and an entered score; it does not calculate quiz scores.
 
 ## Evidence
 
-### CI Pipeline
+### Native Form Inside Mattermost
+
+![Native Mattermost quiz dialog](docs/evidence/task5247-quiz-form.png)
+
+### Successful n8n Execution
+
+![Submission workflow completed successfully](docs/evidence/task5247-n8n-success.png)
+
+### CI Validation
 
 ![Successful CI pipeline](docs/evidence/task-5247-phase-2-ci-validation-passed.png)
 
-### n8n → Mattermost Validation
+<details>
+<summary>Earlier integration and template evidence</summary>
+
+### n8n → Mattermost
 
 ![Successful n8n to Mattermost workflow](docs/evidence/task-5247-n8n-mattermost-e2e-success.png)
 
 ### Dynamic Quiz Notification
 
-![Successful dynamic quiz notification](docs/evidence/task-5247-dynamic-quiz-mattermost-success.png)
+![Dynamic quiz notification](docs/evidence/task-5247-dynamic-quiz-mattermost-success.png)
 
-### Custom Form n8n Execution
+### Mock Custom-Form Execution
 
-![Successful custom form n8n execution](docs/evidence/task5247_n8n_success.png)
+![Successful custom-form workflow](docs/evidence/task5247_n8n_success.png)
 
-### Custom Form Mattermost Notification
+### Mock Custom-Form Notification
 
-![Successful custom form Mattermost notification](docs/evidence/task5247_mattermost_success.png)
+![Custom-form notification in Mattermost](docs/evidence/task5247_mattermost_success.png)
 
 ### Reusable Template Import
 
-The sanitized, inactive workflow template was imported successfully with all four nodes connected.
+![Sanitized custom-form template imported successfully](docs/evidence/task5247_reusable_template_import.png)
 
-![Reusable n8n template imported successfully](docs/evidence/task5247_reusable_template_import.png)
+</details>
 
 ## Local Verification
 
@@ -68,10 +75,10 @@ python3 -m venv .venv
 .venv/bin/pytest --cov=app --cov-report=term-missing
 ```
 
-Expected: **16 tests passed** and **87.56% coverage**.
+Recorded result: **16 tests passed, 87.56% coverage**. Live n8n and Mattermost validation is documented separately above.
 
 ## Scope and Security
 
-The design, application, tests, CI pipeline, isolated Mattermost integration, dynamic quiz, and mock custom-form notification are complete. The form workflow is notification-only; creating or adding a real Mattermost user requires an approved destination, permissions, and API method.
+The native form and bot notification were validated in an isolated test channel. Earlier mock-form tests demonstrated notification delivery, not real-user provisioning.
 
-No webhook URL, token, password, internal hostname, or real personal data is stored in this repository.
+Production rollout and user provisioning remain outside this validation. Workflow exports must be sanitized before committing; credentials belong in n8n’s credential store. Review screenshots for internal information before sharing.
