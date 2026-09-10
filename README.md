@@ -7,26 +7,29 @@ Research, architecture, and proof of concept for attendance, worklogs, mentor re
 | Area | Outcome |
 |---|---|
 | Application | Attendance, worklog/digest, and FAQ modules implemented |
-| Local validation | 16 tests passed; reported coverage: 87.56%; API and container health checks passed |
+| Local validation | 16 tests passed; 87.56% coverage; API and container health checks passed |
 | CI | GitHub Actions passed with SHA-pinned actions, Ruff, preflight, and dependency checks |
-| Native Mattermost form | `/quiz` opens an interactive dialog directly inside Mattermost |
-| Submission | n8n receives the form data, posts it through the bot, and returns a successful response |
-| Reusability | Earlier sanitized custom-form template imported successfully |
+| Native Mattermost form | `/quiz` opens an interactive dialog in both the isolated test channel and Town Square |
+| Submission | n8n receives the form data, posts through the bot, and returns a successful response |
+| Live deployment | Quiz submissions successfully reached the isolated test channel and shared Town Square channel |
+| Reusability | Sanitized custom-form template imported successfully |
 
 ## Architecture
 
 The application uses FastAPI for policy logic, with PostgreSQL and the Mattermost API as integration targets.
-
-The verified native form runs through two independent n8n webhook flows:
 
 ```text
 /quiz → Open webhook → Mattermost dialog → Response
 Submit → Submission webhook → Bot channel post → Response
 ```
 
-Users complete the form inside Mattermost. This proof of concept records participant, quiz name, and an entered score; it does not calculate quiz scores.
+Users complete the form inside Mattermost. The proof of concept records the participant, quiz name, and entered score; it does not automatically calculate scores.
 
 ## Evidence
+
+### Town Square Deployment
+
+![Successful Town Square deployment](docs/evidence/task5247-town-square-success.png)
 
 ### Native Form Inside Mattermost
 
@@ -75,10 +78,10 @@ python3 -m venv .venv
 .venv/bin/pytest --cov=app --cov-report=term-missing
 ```
 
-Recorded result: **16 tests passed, 87.56% coverage**. Live n8n and Mattermost validation is documented separately above.
+Recorded result: **16 tests passed with 87.56% coverage**.
 
 ## Scope and Security
 
-The native form and bot notification were validated in an isolated test channel. Earlier mock-form tests demonstrated notification delivery, not real-user provisioning.
+The native form and bot notification were validated in both the isolated test channel and Town Square on the company Mattermost environment. Earlier mock-form tests demonstrated notification delivery, not real-user provisioning.
 
-Production rollout and user provisioning remain outside this validation. Workflow exports must be sanitized before committing; credentials belong in n8n’s credential store. Review screenshots for internal information before sharing.
+Rollout to additional channels and user provisioning remain outside this validation. Workflow exports must be sanitized before committing, and credentials must remain in n8n’s credential store.
