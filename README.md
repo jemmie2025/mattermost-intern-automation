@@ -1,72 +1,65 @@
-# Task #5247 — Intern Automation Bots for Self-Hosted Mattermost
+# Task #5247 — Intern Automation and Quiz Workflows
 
-Research, architecture, and proof of concept for attendance, worklogs, mentor reporting, onboarding FAQs, and Mattermost automation.
+Mattermost automation for attendance, worklogs, reporting, and onboarding FAQs, extended with Baserow quiz grading and department-specific Quiz 3 submission workflows.
 
-## Verified Results
+## Implementation
 
-| Area | Outcome |
-|---|---|
-| Application | Attendance, worklog/digest, and FAQ modules implemented |
-| Local validation | 16 tests passed; 87.56% coverage; API and container health checks passed |
-| CI | GitHub Actions passed with SHA-pinned actions, Ruff, preflight, and dependency checks |
-| Native Mattermost form | `/quiz` opens an interactive dialog in both the isolated test channel and Town Square |
-| Submission | n8n receives the form data, posts through the bot, and returns a successful response |
-| Live deployment | Quiz submissions successfully reached the isolated test channel and shared Town Square channel |
-| Reusability | Sanitized custom-form template imported successfully |
+| Component | Purpose |
+| --- | --- |
+| FastAPI application | Attendance, worklog/digest, and FAQ modules, with PostgreSQL and Mattermost API integration targets |
+| Native Mattermost form | Collect quiz details through `/quiz` and post entered scores through n8n |
+| Baserow quiz grading | Validate submissions, calculate scores for selected questions, save results, and notify Mattermost |
+| Quiz 3 replicas | Process AI, DevOps, and Backend submissions using the existing HR workflow as the reference |
 
-## Architecture
+The native Mattermost form records an entered score. The separate Baserow grading workflow calculates scores.
 
-The application uses FastAPI for policy logic, with PostgreSQL and the Mattermost API as integration targets.
+## Quiz Grading Results
 
-```text
-/quiz → Open webhook → Mattermost dialog → Response
-Submit → Submission webhook → Bot channel post → Response
-```
+Submissions are matched by **personal email and Attempt ID**, validated, and compared against the configured answer key.
 
-Users complete the form inside Mattermost. The proof of concept records the participant, quiz name, and entered score; it does not automatically calculate scores.
+| Assessment | Verified Result |
+| --- | --- |
+| Quiz 2 | 2/2 |
+| Finance Quiz 3 | 3/3 |
+| AI Quiz 3 | 2/2 |
+| Orientation | Completed |
+| **Total** | **7/7 — 100%** |
 
-## Evidence
+The total covers seven configured questions. Orientation completion is tracked separately.
 
-### Town Square Deployment
+![Quiz results successfully posted to Mattermost](docs/evidence/task-5247-quiz-grading-mattermost-success.png)
 
-![Successful Town Square deployment](docs/evidence/task5247-town-square-success.png)
+## Quiz 3 Submission Replicas
 
-### Native Form Inside Mattermost
+Replicated the HR workflow for **AI, DevOps, and Backend**, adapting department-specific source tables and field mappings. The original HR workflow remains unchanged.
 
-![Native Mattermost quiz dialog](docs/evidence/task5247-quiz-form.png)
+Each replica:
 
-### Successful n8n Execution
+1. Retrieves unprocessed Quiz 3 submissions.
+2. Finds the intern by email and updates or creates a completion tracking record.
+3. Merges the branches and waits five seconds.
+4. Sends a confirmation email through Outlook.
+5. Creates a pre-onboarding record.
+6. Marks the source submission as processed.
 
-![Submission workflow completed successfully](docs/evidence/task5247-n8n-success.png)
+**Status:** All three workflows passed submission testing and are published. Review n8n’s execution history to verify subsequent scheduled runs.
 
-### CI Validation
+### Review Links
 
-![Successful CI pipeline](docs/evidence/task-5247-phase-2-ci-validation-passed.png)
+- [Intern Quiz Completion Tracking (928)](https://baserow-intern.pmx.acumen-strategy.com/database/265/table/928/3799)
+- [Intern Pre-Onboarding List (922)](https://baserow-intern.pmx.acumen-strategy.com/database/265/table/922/3788)
 
-<details>
-<summary>Earlier integration and template evidence</summary>
+These shared Baserow result tables require appropriate access permissions.
 
-### n8n → Mattermost
+## Validation and Evidence
 
-![Successful n8n to Mattermost workflow](docs/evidence/task-5247-n8n-mattermost-e2e-success.png)
+- **Application:** 16 tests passed with **87.56% coverage**; API and container health checks passed.
+- **CI:** GitHub Actions passed with SHA-pinned actions, Ruff, preflight, and dependency checks.
+- **Mattermost:** Native form and bot delivery verified in the isolated test channel and Town Square.
+- **Quiz 3:** Completion tracking, confirmation emails, pre-onboarding records, and source updates verified with test submissions.
+- **Reusability:** Sanitized custom-form template imported successfully.
 
-### Dynamic Quiz Notification
-
-![Dynamic quiz notification](docs/evidence/task-5247-dynamic-quiz-mattermost-success.png)
-
-### Mock Custom-Form Execution
-
-![Successful custom-form workflow](docs/evidence/task5247_n8n_success.png)
-
-### Mock Custom-Form Notification
-
-![Custom-form notification in Mattermost](docs/evidence/task5247_mattermost_success.png)
-
-### Reusable Template Import
-
-![Sanitized custom-form template imported successfully](docs/evidence/task5247_reusable_template_import.png)
-
-</details>
+Supporting evidence: [Native form](docs/evidence/task5247-quiz-form.png) · [n8n execution](docs/evidence/task5247-n8n-success.png) · [Town Square delivery](docs/evidence/task5247-town-square-success.png) · [CI validation](docs/evidence/task-5247-phase-2-ci-validation-passed.png)
 
 ## Local Verification
 
@@ -78,10 +71,10 @@ python3 -m venv .venv
 .venv/bin/pytest --cov=app --cov-report=term-missing
 ```
 
-Recorded result: **16 tests passed with 87.56% coverage**.
+Recorded coverage applies to the Python application, not the n8n workflows.
 
 ## Scope and Security
 
-The native form and bot notification were validated in both the isolated test channel and Town Square on the company Mattermost environment. Earlier mock-form tests demonstrated notification delivery, not real-user provisioning.
+Pre-onboarding record creation does not provision user accounts. Additional channel rollout and account provisioning remain outside the verified scope.
 
-Rollout to additional channels and user provisioning remain outside this validation. Workflow exports must be sanitized before committing, and credentials must remain in n8n’s credential store.
+Store credentials in n8n’s credential store and sanitize workflow exports before committing.
